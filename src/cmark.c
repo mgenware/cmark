@@ -7,8 +7,12 @@
 #include "cmark.h"
 #include "buffer.h"
 
+#include "../extensions/core-extensions.h"
+
 cmark_node_type CMARK_NODE_LAST_BLOCK = CMARK_NODE_FOOTNOTE_DEFINITION;
 cmark_node_type CMARK_NODE_LAST_INLINE = CMARK_NODE_FOOTNOTE_REFERENCE;
+
+static const char *gfm_extensions[] = { "table", "strikethrough", "autolink", "tagfilter" };
 
 int cmark_version() { return CMARK_VERSION; }
 
@@ -51,5 +55,29 @@ char *cmark_markdown_to_html(const char *text, size_t len, int options) {
   result = cmark_render_html(doc, options, NULL);
   cmark_node_free(doc);
 
+  return result;
+}
+
+char *cmark_gfm_markdown_to_html(const char *text, size_t len, int options) {
+  core_extensions_ensure_registered();
+
+  cmark_mem *mem = cmark_get_default_mem_allocator();
+  cmark_parser *parser = cmark_parser_new_with_mem(options, mem);
+
+  int nb_extensions = sizeof(gfm_extensions) / sizeof(char*);
+  for (int i = 0; i < nb_extensions; i++) {
+      cmark_syntax_extension *extension = cmark_find_syntax_extension(gfm_extensions[i]);
+      if (extension) {
+          cmark_parser_attach_syntax_extension(parser, extension);
+      }
+  }
+
+  cmark_parser_feed(parser, text, len);
+  cmark_node *document = cmark_parser_finish(parser);
+
+  char *result = cmark_render_html_with_mem(document, options, cmark_parser_get_syntax_extensions(parser), mem);
+
+  cmark_parser_free(parser);
+  cmark_node_free(document);
   return result;
 }
