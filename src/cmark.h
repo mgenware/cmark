@@ -28,14 +28,6 @@ extern "C" {
 CMARK_EXPORT
 char *cmark_markdown_to_html(const char *text, size_t len, int options);
 
-/** Convert 'text' (assumed to be a UTF-8 encoded string with length
- * 'len') from GFM (GitHub Flavored Markdown) to HTML, returning a null-terminated,
- * UTF-8-encoded string. It is the caller's responsibility
- * to free the returned buffer.
- */
-CMARK_EXPORT
-char *cmark_gfm_markdown_to_html(const char *text, size_t len, int options);
-
 /** ## Node Structure
  */
 

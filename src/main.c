@@ -18,6 +18,8 @@
 #include <fcntl.h>
 #endif
 
+static const char *gfm_extensions[] = { "table", "strikethrough", "autolink", "tagfilter" };
+
 typedef enum {
   FORMAT_NONE,
   FORMAT_HTML,
@@ -281,4 +283,28 @@ failure:
   free(files);
 
   return res;
+}
+
+char *cmark_gfm_markdown_to_html(const char *text, size_t len, int options) {
+  core_extensions_ensure_registered();
+
+  cmark_mem *mem = cmark_get_default_mem_allocator();
+  cmark_parser *parser = cmark_parser_new_with_mem(options, mem);
+
+  int nb_extensions = sizeof(gfm_extensions) / sizeof(char*);
+  for (int i = 0; i < nb_extensions; i++) {
+      cmark_syntax_extension *extension = cmark_find_syntax_extension(gfm_extensions[i]);
+      if (extension) {
+          cmark_parser_attach_syntax_extension(parser, extension);
+      }
+  }
+
+  cmark_parser_feed(parser, text, len);
+  cmark_node *document = cmark_parser_finish(parser);
+
+  char *result = cmark_render_html_with_mem(document, options, cmark_parser_get_syntax_extensions(parser), mem);
+
+  cmark_parser_free(parser);
+  cmark_node_free(document);
+  return result;
 }
