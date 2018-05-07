@@ -19,7 +19,8 @@
 #endif
 
 static const char *gfm_extensions[] = { "table", "strikethrough", "autolink", "tagfilter" };
-static const char *gfm_extensions_unsafe[] = { "table", "strikethrough", "autolink" };
+static const int gfm_mounted_all = 4;
+static const int gfm_mounted_no_tag_filter = 3;
 
 typedef enum {
   FORMAT_NONE,
@@ -292,10 +293,9 @@ char *cmark_gfm_markdown_to_html(const char *text, size_t len, int options, int 
   cmark_mem *mem = cmark_get_default_mem_allocator();
   cmark_parser *parser = cmark_parser_new_with_mem(options, mem);
 
-  const char **exts = no_tag_filter ? gfm_extensions_unsafe : gfm_extensions;
-  int nb_extensions = sizeof(exts) / sizeof(char*);
-  for (int i = 0; i < nb_extensions; i++) {
-      cmark_syntax_extension *extension = cmark_find_syntax_extension(exts[i]);
+  int mounted = no_tag_filter ? gfm_mounted_no_tag_filter : gfm_mounted_all;
+  for (int i = 0; i < mounted; i++) {
+      cmark_syntax_extension *extension = cmark_find_syntax_extension(gfm_extensions[i]);
       if (extension) {
           cmark_parser_attach_syntax_extension(parser, extension);
       }
